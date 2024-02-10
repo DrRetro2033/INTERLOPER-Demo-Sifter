@@ -1,7 +1,7 @@
 # INTERLOPER Demo Sifter
 A python 3 script that helps with sifting through demos from the INTERLOPER series.
 
-##Prerequisites:
+## Prerequisites:
 - Python 3
 
 ## How to Use:
