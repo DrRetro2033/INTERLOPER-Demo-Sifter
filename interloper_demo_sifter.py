@@ -1,11 +1,10 @@
 import argparse
 import os
 import struct
-
 path = ""
 
-typing = {"Type 1":2.0,"Type 2":10.0,"Type 3":20.0}
-typing["Type 4/5"] = "+"+str(typing["Type 3"])
+typing = {"Type 1":2.0,"Type 2":10.0,"Type 3":20.0} # You can edit this to get different ranges of length (Type 1 are demos that are less than 2.0 seconds).
+typing["Type 4/5"] = "+"+str(typing["Type 3"]) # Just for avoiding errors.
 
 def get_files(path):
     return os.listdir(path)
@@ -26,14 +25,22 @@ def hex_to_float(hex_string):
 
 def organize_demos(files):
     demo_types = {"Type 1":[],"Type 2":[],"Type 3":[],"Type 4/5":[]}
+
     for filename in files:
         file = open(path+'/'+filename,'rb')
-        file.seek(0x420)
-        length = file.read(4).hex()
-        length = hex_to_float(length)
-        file.seek(0x218)
-        map = file.read(140).decode("utf-8").rstrip('\x00')
-        info = {'name':filename,'length':length,'map':map}
+        map = ""
+        length = 0
+        try:
+            file.seek(0x420)
+            length = file.read(4).hex()
+            length = hex_to_float(length)
+            file.seek(0x218)
+            map = file.read(140).decode("utf-8").rstrip('\x00')
+        except UnicodeDecodeError:
+            print(str(filename)+" is either broken, or is not a source engine demo!")
+            continue
+        info = {'name':filename,'length':float(round(length * 100)) / 100,'map':map}
+
         if length <= typing["Type 1"]:
             demo_types["Type 1"].append(info)
         elif length <= typing["Type 2"]:
@@ -55,9 +62,13 @@ def save_results(final_report):
     file.close()
 
 def write_type(file,report,type):
-    file.write(type+" ("+str(typing[type])+" seconds):\n")
+    if type == "Type 4/5":
+        file.write(type+" ("+str(typing[type])+" seconds):\n")
+    else:
+        file.write(type+" (<"+str(typing[type])+" seconds):\n")
+    
     for info in report[type]:
-        file.write("\t"+str(info['name']+': '+str(info['length'])))
+        file.write("\t"+str(info['name']+': '+str(info['length'])+" seconds"))
         if str(info['map']).startswith("data"):
             file.write(" \t <- This demo file uses a data map.\tMap: "+info['map'])
         file.write("\n")
@@ -76,7 +87,3 @@ if args.DemPath:
     files = filter_files(files)
     final_report = organize_demos(files)
     save_results(final_report)
-
-
-
-
